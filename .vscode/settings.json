@@ -6,7 +6,7 @@
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     "git.ignoreLimitWarning": true,
     "[typescriptreact]": {
-        "editor.defaultFormatter": "esbenp.prettier-vscode"
+        "editor.defaultFormatter": "Vue.volar"
     },
     "typescript.tsdk": "node_modules/typescript/lib"
 }
