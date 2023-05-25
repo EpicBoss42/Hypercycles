@@ -5,13 +5,14 @@
         </template>
         <template v-slot:body>
             <details open>
-                <summary>v0.0 Initial Commit - <time>2021-09-04</time></summary>
+                <summary>v0.1 Cyclical Beginnings - <time>2021-25-05</time></summary>
                 This is the first release :D
                 <ul>
-                    <li class="feature">Did everything</li>
-                    <li class="fix">Had some fun</li>
-                    <li class="breaking">Removed everything</li>
-                    <li class="balancing">Created some bugs to fix later</li>
+                    <li class="feature">Added the first 10 Cycles Upgrades</li>
+                    <li class="feature">Added the first 2 Cycles Buyables</li>
+                    <li class="feature">Added the first Cycles Challenge</li>
+                    <li class="feature">Created custom layer icon</li>
+                    <li class="balancing">Set endgame to 1 Cycle of Difficulties completion</li>
                 </ul>
             </details>
         </template>

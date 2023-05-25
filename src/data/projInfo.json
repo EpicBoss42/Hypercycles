@@ -1,15 +1,15 @@
 {
 	"$schema": "./projInfo-schema.json",
 
-	"title": "HyperCycles",
+	"title": "The Ouroboros Protocol",
 	"description": "A project made in Profectus for the Profectus Creation Jam",
-	"id": "hypercycles",
+	"id": "ouroboros",
 	"author": "EpicBoss32",
 	"discordName": "",
 	"discordLink": "",
 
-	"versionNumber": "0.0",
-	"versionTitle": "Initial Commit",
+	"versionNumber": "0.1",
+	"versionTitle": "Cyclical Beginnings",
 
 	"allowGoBack": true,
 	"defaultShowSmall": false,

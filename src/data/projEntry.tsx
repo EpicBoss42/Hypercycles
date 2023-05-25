@@ -12,19 +12,32 @@ import type { DecimalSource } from "util/bignum";
 import Decimal, { format, formatTime } from "util/bignum";
 import { render } from "util/vue";
 import { computed, toRaw } from "vue";
-import prestige from "./layers/prestige";
+import cycles from "./layers/cycles";
+import {
+    cycle, 
+    envelop,
+    diamondOne
+} from "./nodeTypes";
+import { createBoard } from "features/boards/board";
+
+const types = {
+    cycle,
+    envelop,
+    diamondOne
+};
 
 /**
  * @hidden
  */
 export const main = createLayer("main", function (this: BaseLayer) {
-    const points = createResource<DecimalSource>(10);
+    const points = createResource<DecimalSource>(0);
     const best = trackBest(points);
     const total = trackTotal(points);
 
     const pointGain = computed(() => {
         // eslint-disable-next-line prefer-const
         let gain = new Decimal(1);
+        gain = gain.times(cycles.totalMult.apply(1))
         return gain;
     });
     globalBus.on("update", diff => {
@@ -32,11 +45,28 @@ export const main = createLayer("main", function (this: BaseLayer) {
     });
     const oomps = trackOOMPS(points, pointGain);
 
+    const board = createBoard(board => ({
+        startNodes: () => [
+            {position: {x: 0, y: 0}, type: "envelop"},
+            {position: {x: 0, y: 0}, type: "diamondOne"},
+            {position: {x: 0, y: 0}, type: "cycle"}
+        ],
+        types: types,
+        style: {
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            overflow: "hidden",
+        }
+    }));
+
     const tree = createTree(() => ({
-        nodes: [[prestige.treeNode]],
+        nodes: [[cycles.treeNode]],
         branches: [],
         onReset() {
-            points.value = toRaw(this.resettingNode.value) === toRaw(prestige.treeNode) ? 0 : 10;
+            points.value = toRaw(this.resettingNode.value) === toRaw(cycles.treeNode) ? 0 : 10;
             best.value = points.value;
             total.value = points.value;
         },
@@ -60,16 +90,17 @@ export const main = createLayer("main", function (this: BaseLayer) {
                     <h2>{format(points.value)}</h2>
                     {Decimal.lt(points.value, "1e1e6") ? <span> points</span> : null}
                 </div>
-                {Decimal.gt(pointGain.value, 0) ? <div>({oomps.value})</div> : null}
+                {Decimal.gt(pointGain.value, 0) ? <div>({(oomps.value)})</div> : null}
                 <Spacer />
-                {render(tree)}
+                {render(board)}
             </>
         )),
         points,
         best,
         total,
         oomps,
-        tree
+        tree,
+        board
     };
 });
 
@@ -80,13 +111,13 @@ export const main = createLayer("main", function (this: BaseLayer) {
 export const getInitialLayers = (
     /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
     player: Partial<Player>
-): Array<GenericLayer> => [main, prestige];
+): Array<GenericLayer> => [main, cycles];
 
 /**
  * A computed ref whose value is true whenever the game is over.
  */
 export const hasWon = computed(() => {
-    return false;
+    return Decimal.gte(cycles.challenges.chal11.completions.value, 1);
 });
 
 /**
