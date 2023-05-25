@@ -1,4 +1,4 @@
-import{g as Ue}from"./lz-string.bfbf8ec3.js";/**!
+import{g as Ue}from"./amator.ec5a7932.js";/**!
  * Sortable 1.14.0
  * @author	RubaXa   <trash@rubaxa.org>
  * @author	owenm    <owen23355@gmail.com>
