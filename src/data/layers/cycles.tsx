@@ -363,8 +363,8 @@ const layer = createLayer(id, function (this: BaseLayer) {
 
     const upgrades = {upg11, upg12, upg13, upg14, upg15, upg21, upg22, upg23, upg24, upg25};
 
-    // Interpreter needs to be reminded what type this is due to circular definition
-    const buy11: Repeatable<RepeatableOptions> = createRepeatable(() => ({
+    // @ts-ignore
+    const buy11 = createRepeatable(() => ({
         requirements: [createCostRequirement(() => ({
             resource: noPersist(points),
             cost: Formula.variable(buy11.amount).add(1).mul(10)
@@ -397,7 +397,8 @@ const layer = createLayer(id, function (this: BaseLayer) {
         return base
     });
 
-    const buy12: Repeatable<RepeatableOptions> = createRepeatable(() => ({
+    // @ts-ignore
+    const buy12 = createRepeatable<{}>(() => ({
         requirements: createCostRequirement(() => ({
             resource: noPersist(createResource(buy11.amount, "Fractured Cycles")),
             cost: Formula.variable(buy12.amount).add(1).mul(2).div(3).pow(2).add(3.5).ceil()
