@@ -110,6 +110,57 @@
                     :stroke="progressColor"
                 />
             </g>
+            <g v-else-if="shape === Shape.Square">
+                <rect
+                    v-if="canAccept"
+                    class="receiver"
+                    :width="size * sqrSize + 16"
+                    :height="size * sqrSize + 16"
+                    :transform="`translate(${-(size * sqrSize + 16) / 2}, ${
+                        -(size * sqrSize + 16) / 2
+                    })`"
+                    :fill="backgroundColor"
+                    :stroke="receivingNode ? '#0F0' : '#0F03'"
+                    :stroke-width="2"
+                />
+
+                <rect
+                    class="body"
+                    :width="size * sqrSize"
+                    :height="size * sqrSize"
+                    :transform="`translate(${(-size * sqrSize) / 2}, ${(-size * sqrSize) / 2})`"
+                    :fill="fillColor"
+                    :stroke="outlineColor"
+                    :stroke-width="4"
+                />
+
+                <rect
+                    v-if="progressDisplay === ProgressDisplay.Fill"
+                    class="progress progressFill"
+                    :width="Math.max(size * sqrSize * progress - 2, 0)"
+                    :height="Math.max(size * sqrSize * progress - 2, 0)"
+                    :transform="`translate(${-Math.max(size * sqrSize * progress - 2, 0) / 2}, ${
+                        -Math.max(size * sqrSize * progress - 2, 0) / 2
+                    })`"
+                    :fill="progressColor"
+                />
+                <rect
+                    v-else
+                    class="progress progressDiamond"
+                    :width="size * sqrSize + 9"
+                    :height="size * sqrSize + 9"
+                    :transform="`translate(${-(size * sqrSize + 9) / 2}, ${
+                        -(size * sqrSize + 9) / 2
+                    })`"
+                    fill="transparent"
+                    :stroke-dasharray="(size * sqrSize + 9) * 4"
+                    :stroke-width="5"
+                    :stroke-dashoffset="
+                        (size * sqrSize + 9) * 4 - progress * (size * sqrSize + 9) * 4
+                    "
+                    :stroke="progressColor"
+                />
+            </g>
 
             <text :fill="titleColor" class="node-title">{{ title }}</text>
         </g>
@@ -149,6 +200,7 @@ import { CSSProperties, computed, toRefs, unref, watch } from "vue";
 import BoardNodeAction from "./BoardNodeAction.vue";
 
 const sqrtTwo = Math.sqrt(2);
+const sqrSize = 1 + sqrtTwo / 2;
 
 const _props = defineProps<{
     node: BoardNode;

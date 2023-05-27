@@ -5,6 +5,17 @@
         </template>
         <template v-slot:body>
             <details open>
+                <summary>v0.2 First Break - <time>2021-27-05</time></summary>
+                This is the second release
+                <ul>
+                    <li class="feature">Added Hypercycles and Broken Cycles</li>
+                    <li class="feature">Added 5 Hypercycle Upgrades and a Broken Cycle Upgrade</li>
+                    <li class="feature">Added another Cycles Buyable and Challenge</li>
+                    <li class="feature">Created a new layer icon used for Hypercycles and Broken Cycles</li>
+                    <li class="balancing">Moved endgame to Hypercyclic Mastery purchased</li>
+                </ul>
+            </details>
+            <details open>
                 <summary>v0.1 Cyclical Beginnings - <time>2021-25-05</time></summary>
                 This is the first release :D
                 <ul>

@@ -2,7 +2,7 @@ import Spacer from "components/layout/Spacer.vue";
 import { jsx } from "features/feature";
 import { createResource, trackBest, trackOOMPS, trackTotal } from "features/resources/resource";
 import type { GenericTree } from "features/trees/tree";
-import { branchedResetPropagation, createTree } from "features/trees/tree";
+import { branchedResetPropagation, createTree, defaultResetPropagation } from "features/trees/tree";
 import { globalBus } from "game/events";
 import type { BaseLayer, GenericLayer } from "game/layers";
 import { createLayer } from "game/layers";
@@ -13,18 +13,46 @@ import Decimal, { format, formatTime } from "util/bignum";
 import { render } from "util/vue";
 import { computed, toRaw } from "vue";
 import cycles from "./layers/cycles";
+import hypercycles from "./layers/hypercycles";
+import brokencycles from "./layers/brokencycles";
 import {
     cycle, 
+    hypercycle,
+    brokencycle,
     envelop,
-    diamondOne
+    diamondOne,
+    diamondTwo
 } from "./nodeTypes";
-import { createBoard } from "features/boards/board";
+import { BoardNodeLink, createBoard } from "features/boards/board";
+import { createMultiplicativeModifier, createSequentialModifier } from "game/modifiers";
 
 const types = {
     cycle,
+    hypercycle,
+    brokencycle,
     envelop,
-    diamondOne
+    diamondOne,
+    diamondTwo
 };
+
+const pointsMult = createSequentialModifier(() => [
+    createMultiplicativeModifier(() => ({
+        multiplier: 2,
+        enabled: cycles.upgrades.upg11.bought
+    })),
+    createMultiplicativeModifier(() => ({
+        multiplier: cycles.upgradeEffects.upg12Effect,
+        enabled: cycles.upgrades.upg12.bought
+    })),
+    createMultiplicativeModifier(() => ({
+        multiplier: cycles.upgradeEffects.upg25Effect,
+        enabled: cycles.upgrades.upg25.bought
+    })),
+    createMultiplicativeModifier(() => ({
+        multiplier: hypercycles.upgradeEffects.upg11Effect,
+        enabled: hypercycles.upgrades.upg11.bought
+    }))
+]);
 
 /**
  * @hidden
@@ -37,7 +65,7 @@ export const main = createLayer("main", function (this: BaseLayer) {
     const pointGain = computed(() => {
         // eslint-disable-next-line prefer-const
         let gain = new Decimal(1);
-        gain = gain.times(cycles.totalMult.apply(1))
+        gain = gain.times(pointsMult.apply(1));
         return gain;
     });
     globalBus.on("update", diff => {
@@ -47,11 +75,31 @@ export const main = createLayer("main", function (this: BaseLayer) {
 
     const board = createBoard(board => ({
         startNodes: () => [
-            {position: {x: 0, y: 0}, type: "envelop"},
-            {position: {x: 0, y: 0}, type: "diamondOne"},
-            {position: {x: 0, y: 0}, type: "cycle"}
+            {position: {x: 0, y: 0}, type: "envelop", id: 1},
+            {position: {x: 0, y: 0}, type: "diamondOne", id: 2},
+            {position: {x: 0, y: 0}, type: "cycle", id: 3}
         ],
         types: types,
+        links: () => {
+            let links = []
+            if (board.nodes.value[4]) {
+                links.push({
+                    startNode: {position: {x:0, y:0}, id: 1, type: "envelop"},
+                    endNode: {position: {x:200, y:0}, id: 4, type: "envelop"},
+                    stroke: "var(--accent3)",
+                    strokeWidth: 10
+                })
+            }
+            if (board.nodes.value[8]) {
+                links.push({
+                    startNode: {position: {x:0, y:0}, id: 1, type: "envelop"},
+                    endNode: {position: {x:-200, y:0}, id: 8, type: "envelop"},
+                    stroke: "var(--accent3)",
+                    strokeWidth: 10
+                })
+            }
+            return links
+        },
         style: {
             position: "absolute",
             top: 0,
@@ -63,14 +111,14 @@ export const main = createLayer("main", function (this: BaseLayer) {
     }));
 
     const tree = createTree(() => ({
-        nodes: [[cycles.treeNode]],
-        branches: [],
+        nodes: [[cycles.treeNode], [hypercycles.treeNode, brokencycles.treeNode]],
+        branches: [{startNode: hypercycles.treeNode, endNode: cycles.treeNode}],
         onReset() {
             points.value = toRaw(this.resettingNode.value) === toRaw(cycles.treeNode) ? 0 : 10;
             best.value = points.value;
             total.value = points.value;
         },
-        resetPropagation: branchedResetPropagation
+        resetPropagation: defaultResetPropagation
     })) as GenericTree;
 
     return {
@@ -111,13 +159,13 @@ export const main = createLayer("main", function (this: BaseLayer) {
 export const getInitialLayers = (
     /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
     player: Partial<Player>
-): Array<GenericLayer> => [main, cycles];
+): Array<GenericLayer> => [main, cycles, hypercycles, brokencycles];
 
 /**
  * A computed ref whose value is true whenever the game is over.
  */
 export const hasWon = computed(() => {
-    return Decimal.gte(cycles.challenges.chal11.completions.value, 1);
+    return hypercycles.upgrades.upg15.bought
 });
 
 /**

@@ -12,6 +12,7 @@ import { renderJSX } from "util/vue";
 import { computed, unref } from "vue";
 import Formula from "./formulas/formulas";
 import { FormulaSource, GenericFormula } from "./formulas/types";
+import { noPersist } from "./persistence";
 
 /**
  * An object that can be used to apply or unapply some modification to a number.
@@ -389,4 +390,23 @@ export function createModifierSection({
             </div>
         </div>
     );
+}
+
+export function conditionalModifier(factor: DecimalSource, type: "+"|"x", enabled: Computable<boolean>) {
+    if (type == "+") {
+        return noPersist(createSequentialModifier(() => [
+            createAdditiveModifier(() => ({
+                addend: factor,
+                enabled: enabled
+            }))
+        ]))
+    }
+    else {
+        return noPersist(createSequentialModifier(() => [
+            createMultiplicativeModifier(() => ({
+                multiplier: factor,
+                enabled: enabled
+            }))
+        ]))
+    }
 }
