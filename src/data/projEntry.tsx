@@ -165,7 +165,7 @@ export const getInitialLayers = (
  * A computed ref whose value is true whenever the game is over.
  */
 export const hasWon = computed(() => {
-    return hypercycles.upgrades.upg15.bought
+    return hypercycles.upgrades.upg15.bought.value
 });
 
 /**
