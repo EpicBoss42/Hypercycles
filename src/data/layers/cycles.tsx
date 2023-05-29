@@ -16,7 +16,7 @@ import type { DecimalSource } from "util/bignum";
 import Decimal from "util/bignum"
 import { render, renderCol, renderRow } from "util/vue";
 import { createLayerTreeNode, createResetButton } from "../common";
-import { createUpgrade } from "features/upgrades/upgrade";
+import { Upgrade, UpgradeOptions, createUpgrade } from "features/upgrades/upgrade";
 import { createBooleanRequirement, createCostRequirement } from "game/requirements";
 import { noPersist, persistent } from "game/persistence";
 import { createAdditiveModifier, createMultiplicativeModifier, createSequentialModifier, conditionalModifier, Modifier, createExponentialModifier } from "game/modifiers";
@@ -34,6 +34,7 @@ import { createInfobox } from "features/infoboxes/infobox";
 import { createClickable } from "features/clickables/clickable";
 import { cycle } from "data/nodeTypes";
 import brokencycles from "./brokencycles";
+import ouroboros from "./ouroboros";
 
 const id = "c";
 const layer = createLayer(id, function (this: BaseLayer) {
@@ -50,7 +51,8 @@ const layer = createLayer(id, function (this: BaseLayer) {
         buy11: boolean,
         buy12: boolean,
         buy13: boolean,
-        chal11: boolean
+        chal11: boolean,
+        chal12: boolean
     }>({
         upg21: false,
         upg22: false,
@@ -61,6 +63,7 @@ const layer = createLayer(id, function (this: BaseLayer) {
         buy12: false,
         buy13: false,
         chal11: false,
+        chal12: false
     });
     const brokenStatus = persistent<boolean>(false);
     const brokenEffects = persistent<{positive: DecimalSource, negative: DecimalSource}>({
@@ -107,6 +110,9 @@ const layer = createLayer(id, function (this: BaseLayer) {
 
             return [toReset];
         },
+        onReset() {
+            if (!hypercycles.upgrades.upg14.bought.value) brokenEffects.value.positive = 1.15
+        }
     }));
 
     const treeNode = createLayerTreeNode(() => ({
@@ -131,18 +137,21 @@ const layer = createLayer(id, function (this: BaseLayer) {
         onPress: resetButton.onClick
     }));
 
-    const upg11 = createUpgrade(() => ({
+    
+    const upg11: Upgrade<UpgradeOptions> = createUpgrade(() => ({
         requirements: createCostRequirement(() => ({
             resource: noPersist(points),
             cost: 1
         })),
         display: {
             title: "Dual Cycle",
-            description: "Double your points"
-        }
+            description: "Double your points gain"
+        }, 
+        //@ts-ignore
+        visibility: () => {return brokencycles.disableGrid.cells[101].state}
     }));
 
-    const upg12 = createUpgrade(() => ({
+    const upg12: Upgrade<UpgradeOptions> = createUpgrade(() => ({
         requirements: createCostRequirement(() => ({
             resource: noPersist(points),
             cost: 5
@@ -151,7 +160,9 @@ const layer = createLayer(id, function (this: BaseLayer) {
             title: "Cycle of Points",
             description: "Your point gain is increased or decreased cyclically over time",
             effectDisplay: `${format(upg12Effect.value)}x`
-        })
+        }),
+        //@ts-ignore
+        visibility: () => {return brokencycles.disableGrid.cells[102].state}
     }));
     const upg12Effect: ComputedRef<Decimal> = computed(() => {
         const upg12DurationModifier = createSequentialModifier(() => [
@@ -212,7 +223,7 @@ const layer = createLayer(id, function (this: BaseLayer) {
             })),
             createAdditiveModifier(() => ({
                 addend: -1.5,
-                enabled: upg23.bought && !chal11.active.value && !chal12.active.value
+                enabled: upg23.bought.value && !chal11.active.value && !chal12.active.value
             })),
             createAdditiveModifier(() => ({
                 addend: 1,
@@ -229,12 +240,13 @@ const layer = createLayer(id, function (this: BaseLayer) {
 
         base = base.div(duration).sin().mul(maximum).abs().pow(exponent);
 
-        if (brokencycles.upgrades.upg11.bought.value) base2 = base2.div(duration).cos().mul(maximum).abs().pow(exponent)
+        if (brokencycles.upgrades.upg11.bought.value) base2 = base2.div(duration).cos().mul(maximum).abs().pow(exponent);
+
         
         return base.add(minimum).add(conditionalModifier(base2, "+", brokencycles.upgrades.upg11.bought).apply(0));
     });
 
-    const upg13 = createUpgrade(() => ({
+    const upg13: Upgrade<UpgradeOptions> = createUpgrade(() => ({
         requirements: createCostRequirement(() => ({
             resource: noPersist(points),
             cost: 15
@@ -242,10 +254,12 @@ const layer = createLayer(id, function (this: BaseLayer) {
         display: {
             title: "Smaller Cycles",
             description: "The minimum effect of Cycle of Points is increased, but the maximum is decreased"
-        }
+        },
+        //@ts-ignore
+        visibility: () => {return brokencycles.disableGrid.cells[103].state}
     }));
 
-    const upg14 = createUpgrade(() => ({
+    const upg14: Upgrade<UpgradeOptions> = createUpgrade(() => ({
         requirements: createCostRequirement(() => ({
             resource: noPersist(points),
             cost: 25
@@ -253,10 +267,12 @@ const layer = createLayer(id, function (this: BaseLayer) {
         display: {
             title: "Stretched Cycles",
             description: "Increases the cycle length and maximum effect of Cycle of Points"
-        }
+        },
+        //@ts-ignore
+        visibility: () => {return brokencycles.disableGrid.cells[104].state}
     }));
 
-    const upg15 = createUpgrade(() => ({
+    const upg15: Upgrade<UpgradeOptions> = createUpgrade(() => ({
         requirements: createCostRequirement(() => ({
             resource: noPersist(points),
             cost: 30
@@ -264,10 +280,12 @@ const layer = createLayer(id, function (this: BaseLayer) {
         display: {
             title: "Minor Fractures",
             description: "Further increases Cycle of Points' cycle length and max effect"
-        }
+        },
+        //@ts-ignore
+        visibility: () => {return brokencycles.disableGrid.cells[105].state}
     }));
 
-    const upg21 = createUpgrade(() => ({
+    const upg21: Upgrade<UpgradeOptions> = createUpgrade(() => ({
         requirements: createCostRequirement(() => ({
             resource: noPersist(points),
             cost: 300
@@ -277,7 +295,8 @@ const layer = createLayer(id, function (this: BaseLayer) {
             description: "Cycles decrease Cycle of Points' cycle length",
             effectDisplay: `${format(upg21Effect.value)}x`
         }),
-        visibility: () => (Decimal.gte(buy12.amount.value, 3) || visibilityStatuses.value.upg21),
+        //@ts-ignore
+        visibility: () => ((Decimal.gte(buy12.amount.value, 3) || visibilityStatuses.value.upg21) && brokencycles.disableGrid.cells[201].state),
         onPurchase: () => {
             visibilityStatuses.value.upg21 = true
         }
@@ -288,7 +307,7 @@ const layer = createLayer(id, function (this: BaseLayer) {
         return Decimal.recip(base).mul(conditionalModifier(brokenEffects.value.negative, "x", brokenStatus.value).apply(1)).min(1)
     });
 
-    const upg22 = createUpgrade(() => ({
+    const upg22: Upgrade<UpgradeOptions> = createUpgrade(() => ({
         requirements: createCostRequirement(() => ({
             resource: noPersist(points),
             cost: 500
@@ -298,7 +317,8 @@ const layer = createLayer(id, function (this: BaseLayer) {
             description: "Points increase Cycles gain",
             effectDisplay: `${format(upg22Effect.value)}x`
         }),
-        visibility: () => (Decimal.gte(buy12.amount.value, 5) || visibilityStatuses.value.upg22),
+        //@ts-ignore
+        visibility: () => ((Decimal.gte(buy12.amount.value, 5) || visibilityStatuses.value.upg22) && brokencycles.disableGrid.cells[202].state),
         onPurchase: () => {
             visibilityStatuses.value.upg22 = true
         }
@@ -310,7 +330,7 @@ const layer = createLayer(id, function (this: BaseLayer) {
         return Formula.variable(base).step(1e6, f => f.pow(0.5)).div(conditionalModifier(brokenEffects.value.negative, "x", brokenStatus.value).apply(1)).max(1).evaluate()
     });
 
-    const upg23 = createUpgrade(() => ({
+    const upg23: Upgrade<UpgradeOptions> = createUpgrade(() => ({
         requirements: createCostRequirement(() => ({
             resource: noPersist(points),
             cost: 1000
@@ -320,7 +340,8 @@ const layer = createLayer(id, function (this: BaseLayer) {
             description: "The effect of Cycle of Points is squared, but the minimum is drastically lowered and buyables are reset",
             effectDisplay: `^${format(upg23Effect.value)}`
         }),
-        visibility: () => (Decimal.gte(buy12.amount.value, 5) || visibilityStatuses.value.upg23),
+        //@ts-ignore
+        visibility: () => ((Decimal.gte(buy12.amount.value, 5) || visibilityStatuses.value.upg23) && brokencycles.disableGrid.cells[203].state),
         onPurchase: () => {
             buy11.amount.value = 0
             buy12.amount.value = 0
@@ -334,10 +355,11 @@ const layer = createLayer(id, function (this: BaseLayer) {
         base = base.add(conditionalModifier(1, "+", Decimal.gte(chal11.completions.value, 1)).apply(0));
         base = base.add(conditionalModifier(hypercycles.upgradeEffects.upg13Effect.value, "+", hypercycles.upgrades.upg13.bought).apply(0))
         if (chal11.active.value || chal12.active.value) return new Decimal(1)
+        if (ouroboros.trialOne.active.value) return Formula.variable(base).max(1).min(2.5).evaluate();
         return Formula.variable(base).div(conditionalModifier(brokenEffects.value.negative, "x", brokenStatus.value).apply(1)).max(1).evaluate();
     });
 
-    const upg24 = createUpgrade(() => ({
+    const upg24: Upgrade<UpgradeOptions> = createUpgrade(() => ({
         requirements: createCostRequirement(() => ({
             resource: noPersist(points),
             cost: 7500
@@ -347,7 +369,8 @@ const layer = createLayer(id, function (this: BaseLayer) {
             description: "Cyclic Shard's effect is increased by points",
             effectDisplay: `${format(upg24Effect.value)}x`
         }),
-        visibility: () => (Decimal.gte(buy12.amount.value, 5) || visibilityStatuses.value.upg24),
+        //@ts-ignore
+        visibility: () => ((Decimal.gte(buy12.amount.value, 5) || visibilityStatuses.value.upg24) && brokencycles.disableGrid.cells[204].state),
         onPurchase: () => {
             visibilityStatuses.value.upg24 = true
         }
@@ -361,7 +384,7 @@ const layer = createLayer(id, function (this: BaseLayer) {
         createMultiplicativeModifier(() => ({multiplier: upg24Effect, enabled: upg24.bought}))
     ]);
 
-    const upg25 = createUpgrade(() => ({
+    const upg25: Upgrade<UpgradeOptions> = createUpgrade(() => ({
         requirements: createCostRequirement(() => ({
             resource: noPersist(points),
             cost: 25000
@@ -371,7 +394,8 @@ const layer = createLayer(id, function (this: BaseLayer) {
             description: "Cycles boost Point gain",
             effectDisplay: `${format(upg25Effect.value)}x`
         }),
-        visibility: () => (Decimal.gte(buy12.amount.value, 5) || visibilityStatuses.value.upg25),
+        //@ts-ignore
+        visibility: () => ((Decimal.gte(buy12.amount.value, 5) || visibilityStatuses.value.upg25) && brokencycles.disableGrid.cells[205].state),
         onPurchase: () => {
             visibilityStatuses.value.upg25 = true;
             visibilityStatuses.value.chal11 = true;
@@ -393,21 +417,21 @@ const layer = createLayer(id, function (this: BaseLayer) {
             cost: Formula.variable(buy11.amount).add(1).mul(10)
         })),
         createBooleanRequirement(() => {
-            let amount = Formula.variable(buy11.amount).pow_base(Decimal.sub(1.7, buy12Effect.value.increase.div(upg24EApplier.apply(1)).add(1).div(conditionalModifier(10, "x", Decimal.gte(buy11.amount.value, 40)).apply(5)))).add(2).step(20, f => f.pow(3)).step(8e6, g => g.pow(4)).evaluate();
+            let amount = Formula.variable(buy11.amount).pow_base(Decimal.sub(1.7, Formula.variable(buy12Effect.value.increase).div(upg24EApplier.apply(1)).add(1).min(3).div(5).evaluate())).add(2).step(20, f => f.pow(3)).step(8e6, g => g.pow(4)).evaluate();
             amount = Decimal.div(amount, conditionalModifier("1", "+", chal11.active).apply(1));
             amount = Decimal.div(amount, conditionalModifier(brokenEffects.value.negative, "x", brokenStatus.value).apply(1));
             amount = Decimal.pow(amount, conditionalModifier(0.75, "x", chal12.active).apply(1));
             return upg12Effect.value.gte(amount)
         })],
         display: () => {
-            let amount = Formula.variable(buy11.amount).pow_base(Decimal.sub(1.7, buy12Effect.value.increase.div(upg24EApplier.apply(1)).add(1).div(conditionalModifier(10, "x", Decimal.gte(buy11.amount.value, 40)).apply(5)))).add(2).step(20, f => f.pow(3)).step(8e6, g => g.pow(4)).evaluate();
+            let amount = Formula.variable(buy11.amount).pow_base(Decimal.sub(1.7, Formula.variable(buy12Effect.value.increase).div(upg24EApplier.apply(1)).add(1).min(3).div(5).evaluate())).add(2).step(20, f => f.pow(3)).step(8e6, g => g.pow(4)).evaluate();
             amount = Decimal.div(amount, conditionalModifier("1", "+", chal11.active).apply(1));
             amount = Decimal.div(amount, conditionalModifier(brokenEffects.value.negative, "x", brokenStatus.value).apply(1));
             amount = Decimal.pow(amount, conditionalModifier(0.75, "x", chal12.active).apply(1));
             return {
                 title: "Fractured Cycle",
                 description: `Resets current Cycle of Points effect, but increases its maximum value.
-                            C.O.P. value required: ${format(amount)}`,
+                            C.O.P. value required: ${format(amount)}x`,
                 effectDisplay: `+${format(buy11Effect.value)}`
             }
         },
@@ -445,7 +469,7 @@ const layer = createLayer(id, function (this: BaseLayer) {
             buy11.amount.value = new Decimal(0);
             visibilityStatuses.value.buy12 = true;
         },
-        limit: 5
+        limit: () => conditionalModifier(buy13.amount.value, "+", brokencycles.upgrades.upg12.bought).apply(5)
     }));
     const buy12Effect = computed(() => {
         let base = new Decimal(buy12.amount.value)
@@ -465,11 +489,11 @@ const layer = createLayer(id, function (this: BaseLayer) {
     const buy13 = createRepeatable(() => ({
         requirements: createCostRequirement(() => ({
             resource: noPersist(createResource(buy12.amount, "Cyclic Shards")),
-            cost: Formula.variable(buy13.amount).step(2, f => f.mul(1.5)).add(4).floor()
+            cost: Formula.variable(buy13.amount).step(2, f => f.mul(2)).add(4).floor()
         })),
         display: () => ({
             title: "Fragmented Cycles",
-            description: "Increases Cyclic Shard's effect",
+            description: "Increases Cyclic Shard's effect and Hypercycles gain",
             effectDisplay: `+${format(buy13Effect.value)}`
         }),
         visibility: () => {return Decimal.gte(hypercycles.points.value, 5) || visibilityStatuses.value.buy13},
@@ -496,7 +520,7 @@ const layer = createLayer(id, function (this: BaseLayer) {
             title: "Cycle of Difficulties",
             description: "Supercycle is disabled, Recycled Points is capped at 2x, Cycle of Points' max is halved, and your buyables are reset on entry.",
             goal: "2 Cyclic Shards",
-            reward: "Supercycle is cubed rather than squared, and you gain 10% of your Cycles gain on reset each second."
+            reward: "Supercycle's effect becomes cubed rather than squared, and you gain 10% of your Cycles gain on reset each second."
         }),
         onEnter: () => {
             buy11.amount.value = 0;
@@ -547,9 +571,10 @@ const layer = createLayer(id, function (this: BaseLayer) {
             buy12.amount.value = 0;
             buy13.amount.value = 0;
         },
-        visibility: () => {return Decimal.gte(hypercycles.points.value, 10) && upg23.bought.value},
+        visibility: () => {return (Decimal.gte(hypercycles.points.value, 10) && upg23.bought.value) || visibilityStatuses.value.chal12},
         onComplete: () => {
             brokenEffects.value.positive = 1.3;
+            visibilityStatuses.value.chal12 = true;
         }
     }));
     const chal12Bonus = computed(() => {
@@ -564,7 +589,10 @@ const layer = createLayer(id, function (this: BaseLayer) {
 
     // Extremely jank solution to get certain values to constantly update
     const cycleMultiplier = createResource<DecimalSource>(cycleMult.apply(1));
-    const updaters = {cycleMultiplier}
+    const hyperMultiplier = createResource<DecimalSource>(conditionalModifier(buy13Effect.value, "+", true).apply(1));
+    const updaters = {cycleMultiplier, hyperMultiplier};
+
+    let nextAt = new Decimal(10);
 
     this.on("update", diff => {
         cycleValue.value = Decimal.add(cycleValue.value, diff);
@@ -572,6 +600,8 @@ const layer = createLayer(id, function (this: BaseLayer) {
             points.value = Decimal.mul(conversion.currentGain.value, diff).div(10).add(points.value);
         };
         cycleMultiplier.value = cycleMult.apply(1);
+        hyperMultiplier.value = conditionalModifier(buy13Effect.value, "+", true).apply(1);
+        nextAt = new Decimal(conversion.nextAt.value);
     });
 
     return {
@@ -590,11 +620,13 @@ const layer = createLayer(id, function (this: BaseLayer) {
         tooltip,
         brokenStatus,
         brokenEffects,
+        nextAt,
         display: jsx(() => (
             <>
                 <MainDisplay resource={points} color={color} />
                 {render(resetButton)}<br></br>
-                {brokenStatus.value ? <><h2>Currently Broken:</h2><br></br></> : <> </>}
+                {Decimal.gte(chal11.completions.value, 1) ? <>({format(Decimal.div(conversion.currentGain.value, 10))}/sec)<br></br></> : <> </>}
+                {brokenStatus.value ? <><h2>Currently Broken:</h2><br></br><br></br></> : <> </>}
                 {brokenStatus.value ? <><h3>^{format(brokenEffects.value.positive)} Cycles Gain</h3><br></br></>: <> </>}
                 {brokenStatus.value ? <><h3>{format(Decimal.recip(brokenEffects.value.negative))}x Cycles Upgrades effect</h3><br></br></>: <> </>}
                 {renderRow(upg11, upg12, upg13, upg14, upg15)}

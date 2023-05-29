@@ -5,6 +5,15 @@
         </template>
         <template v-slot:body>
             <details open>
+                <summary>v1.0 Ourobori Trials - <time>2021-29-05</time></summary>
+                Profectus Creation Jam Release
+                <ul>
+                    <li class="feature">Added 2 new Broken Cycles Upgrades</li>
+                    <li class="feature">Added Ouroboros Trials</li>
+                    <li class="balancing">Moved endgame to Primitive Self-Eating Snake completion</li>
+                </ul>
+            </details>
+            <details open>
                 <summary>v0.2 First Break - <time>2021-27-05</time></summary>
                 This is the second release
                 <ul>

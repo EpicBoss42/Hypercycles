@@ -19,7 +19,7 @@ import { createLayerTreeNode, createResetButton } from "../common";
 import { createUpgrade } from "features/upgrades/upgrade";
 import { createBooleanRequirement, createCostRequirement } from "game/requirements";
 import { noPersist, persistent } from "game/persistence";
-import { createAdditiveModifier, createMultiplicativeModifier, createSequentialModifier } from "game/modifiers";
+import { conditionalModifier, createAdditiveModifier, createMultiplicativeModifier, createSequentialModifier } from "game/modifiers";
 import { computed } from "vue";
 import Formula from "game/formulas/formulas";
 import { format } from "util/break_eternity";
@@ -37,13 +37,15 @@ const layer = createLayer(id, function (this: BaseLayer) {
     const points = createResource<DecimalSource>(0, "hypercycles");
 
     const conversion = createCumulativeConversion(() => ({
-        formula: x => x.max(0).div(50000).pow(0.1),
+        formula: x => x.max(0).div(50000).pow(0.1).mul(cycles.updaters.hyperMultiplier),
         baseResource: cycles.points,
         gainResource: points
     }));
 
     const reset = createReset(() => ({
-        thingsToReset: (): Record<string, unknown>[] => [layer],
+        thingsToReset: (): Record<string, unknown>[] => {
+            return [{id, name, color, treeNode, points, upg11, upg12, upg13, upg15}]
+        },
     }));
 
     const treeNode = createLayerTreeNode(() => ({
@@ -153,7 +155,7 @@ const layer = createLayer(id, function (this: BaseLayer) {
     const upg15 = createUpgrade(() => ({
         requirements: createCostRequirement(() => ({
             resource: noPersist(points),
-            cost: 5000
+            cost: 50
         })),
         display: () => ({
             title: "Hypercyclic Mastery",
@@ -161,8 +163,16 @@ const layer = createLayer(id, function (this: BaseLayer) {
             effectDisplay: `${format(upg15Effect.value)}x`
         }),
         onPurchase: () => {
-            
-        }
+            main.board.nodes.value.unshift(({
+                id: 0,
+                position: {x: 0, y:0},
+                type: "ourobori"
+            }));
+            main.board.nodes.value[1].position = {x: 0, y: -200}
+            main.board.nodes.value[2].position = {x: 0, y: -200}
+            main.board.nodes.value[3].position = {x: 0, y: -200}
+        },
+        visibility: brokencycles.upgrades.upg13.bought
     }));
     const upg15Effect = computed(() => {
         let base = Decimal.add(points.value, 1)
@@ -178,6 +188,7 @@ const layer = createLayer(id, function (this: BaseLayer) {
         points,
         upgrades,
         upgradeEffects,
+        reset,
         display: jsx(() => (
             <>
                 <MainDisplay resource={points} color={color} />

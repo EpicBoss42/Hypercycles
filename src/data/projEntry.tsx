@@ -21,15 +21,18 @@ import {
     brokencycle,
     envelop,
     diamondOne,
-    diamondTwo
+    diamondTwo,
+ourobori
 } from "./nodeTypes";
 import { BoardNodeLink, createBoard } from "features/boards/board";
 import { createMultiplicativeModifier, createSequentialModifier } from "game/modifiers";
+import ouroboros from "./layers/ouroboros";
 
 const types = {
     cycle,
     hypercycle,
     brokencycle,
+    ourobori,
     envelop,
     diamondOne,
     diamondTwo
@@ -159,13 +162,13 @@ export const main = createLayer("main", function (this: BaseLayer) {
 export const getInitialLayers = (
     /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
     player: Partial<Player>
-): Array<GenericLayer> => [main, cycles, hypercycles, brokencycles];
+): Array<GenericLayer> => [main, cycles, hypercycles, brokencycles, ouroboros];
 
 /**
  * A computed ref whose value is true whenever the game is over.
  */
 export const hasWon = computed(() => {
-    return hypercycles.upgrades.upg15.bought.value
+    return Decimal.gte(ouroboros.trialOne.completions.value, 1)
 });
 
 /**
